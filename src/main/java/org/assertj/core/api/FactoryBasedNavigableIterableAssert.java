@@ -12,6 +12,8 @@
  */
 package org.assertj.core.api;
 
+import java.util.List;
+
 /**
  * Provides helper methods for navigating a list property in a generated assertion class so we can chain assertions
  * through deeply nested models more easily.
@@ -19,9 +21,9 @@ package org.assertj.core.api;
  * @since 2.5.0 / 3.5.0
  */
 //@format:off
-public class FactoryBasedNavigableIterableAssert<SELF extends FactoryBasedNavigableIterableAssert<SELF, ACTUAL, ELEMENT, ELEMENT_ASSERT>, 
+public class FactoryBasedNavigableIterableAssert<SELF extends FactoryBasedNavigableIterableAssert<SELF, ACTUAL, ELEMENT, ELEMENT_ASSERT>,
                                                  ACTUAL extends Iterable<? extends ELEMENT>, 
-                                                 ELEMENT, 
+                                                 ELEMENT,
                                                  ELEMENT_ASSERT extends AbstractAssert<ELEMENT_ASSERT, ELEMENT>>
        extends AbstractIterableAssert<SELF, ACTUAL, ELEMENT, ELEMENT_ASSERT> {
 // @format:on

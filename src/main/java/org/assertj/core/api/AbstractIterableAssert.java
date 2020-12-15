@@ -40,8 +40,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -3067,6 +3069,118 @@ public abstract class AbstractIterableAssert<SELF extends AbstractIterableAssert
   public ELEMENT_ASSERT element(int index) {
     return internalElement(index);
   }
+
+  /**
+   * Navigate and allow to perform assertions on the chosen element of the {@link Iterable} under test.
+   * <p>
+   * By default available assertions after {@code element(index)} are {@code Object} assertions, it is possible though to
+   * get more specific assertions if you create {@code IterableAssert} with either:
+   * <ul>
+   * <li>the element assert class, see: {@link Assertions#assertThat(Iterable, Class) assertThat(Iterable, element assert class)}</li>
+   * <li>an assert factory used that knows how to create elements assertion, see: {@link Assertions#assertThat(Iterable, AssertFactory) assertThat(Iterable, element assert factory)}</li>
+   * </ul>
+   * <p>
+   * Example: default {@code Object} assertions
+   * <pre><code class='java'> // default iterable assert =&gt; element assert is ObjectAssert
+   * Iterable&lt;TolkienCharacter&gt; hobbits = newArrayList(frodo, sam, pippin);
+   *
+   * // assertion succeeds, only Object assertions are available after element(index)
+   * assertThat(hobbits).element(1)
+   *                    .isEqualTo(sam);
+   *
+   * // assertion fails
+   * assertThat(hobbits).element(1)
+   *                    .isEqualTo(pippin);</code></pre>
+   * <p>
+   * If you have created the Iterable assertion using an {@link AssertFactory} or the element assert class,
+   * you will be able to chain {@code element(index)} with more specific typed assertion.
+   * <p>
+   * Example: use of {@code String} assertions after {@code element(index)}
+   * <pre><code class='java'> Iterable&lt;String&gt; hobbits = newArrayList("Frodo", "Sam", "Pippin");
+   *
+   * // assertion succeeds
+   * // String assertions are available after element(index)
+   * assertThat(hobbits, StringAssert.class).element(1)
+   *                                        .startsWith("Sa")
+   *                                        .endsWith("am");
+   * // assertion fails
+   * assertThat(hobbits, StringAssert.class).element(1)
+   *                                        .startsWith("Fro");</code></pre>
+   *
+   * @param index the element's index
+   * @return the assertion on the given element
+   * @throws AssertionError if the given index is out of bound.
+   * @since 2.5.0 / 3.5.0
+   * @see #element(int, InstanceOfAssertFactory)
+   */
+  @CheckReturnValue
+  public SELF elements(Integer... indices) {
+    isNotEmpty();
+
+
+//    checkArgument(predicate != null, "The filter predicate should not be null");
+//    List<? extends ELEMENT> filteredIterable = stream(actual.spliterator(), false).filter(predicate).collect(toList());
+
+//    assertThat(index).describedAs(navigationDescription("check index validity"))
+//      .isBetween(0, IterableUtil.sizeOf(actual) - 1);
+//    ELEMENT elementAtIndex;
+//    if (actual instanceof List) {
+//      @SuppressWarnings("unchecked")
+//      List<? extends ELEMENT> list = (List<? extends ELEMENT>) actual;
+//      elementAtIndex = list.get(index);
+//    } else {
+      //Iterator<? extends ELEMENT> actualIterator = actual.iterator();
+//      for (int i = 0; i < index; i++) {
+//        actualIterator.next();
+//      }
+//      elementAtIndex = actualIterator.next();
+//    }
+
+    //stream a = 1 2 3
+    //stream b = a b c
+    //a.zipper(b) = (1, a), (2, b), (3, c)
+    //b.zipWithIndex = (0, a), (1, b), (2, c)
+
+//    String[] names = {"Sam", "Pamela", "Dave", "Pascal", "Erik"};
+//    IntStream.range(0, names.length)
+//      .filter(i -> names[i].length() <= i)
+//      .mapToObj(i -> names[i])
+//      .collect(Collectors.toList());
+
+    ZipWithIndex<ELEMENT> zipper = new ZipWithIndex<>();
+    Set<Integer> indicesToKeep = new TreeSet<>(Arrays.asList(indices));
+
+    List<? extends ELEMENT> filteredIterable = stream(actual.spliterator(), false)
+      .map(zipper::zip)
+      .filter(element -> indicesToKeep.contains(element.index))
+      .map(indexed -> indexed.element)
+      .collect(toList());
+
+
+  return newAbstractIterableAssert(filteredIterable).withAssertionState(myself);
+
+}
+
+  private static class IndexedElement<T> {
+    final T element;
+    final int index;
+
+    IndexedElement(T element, int index) {
+      this.element = element;
+      this.index = index;
+    }
+  }
+
+  private static class ZipWithIndex<T> {
+    int position = 0;
+
+    IndexedElement<T> zip(T element) {
+      int current = position;
+      position += 1;
+      return new IndexedElement<>(element, current);
+    }
+  }
+
 
   /**
    * Navigate and allow to perform assertions on the chosen element of the {@link Iterable} under test.
