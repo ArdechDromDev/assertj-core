@@ -36,6 +36,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -3117,26 +3118,37 @@ public abstract class AbstractIterableAssert<SELF extends AbstractIterableAssert
   @CheckReturnValue
   public SELF elements(Integer... indices) {
     isNotEmpty();
+    assertIndicesIsNotNull(indices);
 
-    if (indices == null) {
-      throw new AssertionError("indices must not be null");
+    List<ELEMENT> indexedActual = iterableAsList(actual);
+
+    List<ELEMENT> filteredIterable = Arrays
+      .stream(indices)
+      .peek(this::assertIndexIsNotNull)
+      .peek(index -> assertThat(index).describedAs(navigationDescription("check indices validity"))
+        .isBetween(0, IterableUtil.sizeOf(actual) - 1))
+      .map(indexedActual::get)
+      .collect(toList());
+    return newAbstractIterableAssert(filteredIterable).withAssertionState(myself);
+  }
+
+  private void assertIndexIsNotNull(Integer index) {
+    if (index == null) {
+      throw new AssertionError("indices must not contain a null value");
     }
+  }
 
+  private List<ELEMENT> iterableAsList(ACTUAL iterable) {
     List<ELEMENT> indexedActual = new ArrayList<>();
-    for (ELEMENT element : actual) {
+    for (ELEMENT element : iterable) {
       indexedActual.add(element);
     }
+    return indexedActual;
+  }
 
-    try {
-      List<ELEMENT> filteredIterable = Arrays.stream(indices).map(index -> {
-        if (index == null) {
-          throw new AssertionError("indices must not contain a null value");
-        }
-        return indexedActual.get(index);
-      }).collect(toList());
-      return newAbstractIterableAssert(filteredIterable).withAssertionState(myself);
-    } catch (IndexOutOfBoundsException e) {
-      throw new AssertionError(e);
+  private void assertIndicesIsNotNull(Integer[] indices) {
+    if (indices == null) {
+      throw new AssertionError("indices must not be null");
     }
   }
 

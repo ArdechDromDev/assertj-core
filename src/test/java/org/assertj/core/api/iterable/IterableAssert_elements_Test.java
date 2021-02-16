@@ -32,8 +32,6 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Tests for <code>{@link IterableAssert#elements(int)}</code>.
- *
- * @author Stefano Cordio
  */
 @DisplayName("IterableAssert elements(int)")
 class IterableAssert_elements_Test {
@@ -85,7 +83,7 @@ class IterableAssert_elements_Test {
   void should_fail_if_index_out_of_range() {
     AssertionError assertionError = expectAssertionError(() -> assertThat(iterable).elements(5));
     // THEN
-    then(assertionError).hasMessageContaining("out of bound").hasMessageContaining("5");
+    then(assertionError).hasMessageContaining("check indices validity").hasMessageContaining("5");
   }
 
   @Test
