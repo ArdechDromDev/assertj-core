@@ -33,6 +33,7 @@ import static org.assertj.core.util.Preconditions.checkArgument;
 import static org.assertj.core.util.Preconditions.checkNotNull;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -3117,70 +3118,27 @@ public abstract class AbstractIterableAssert<SELF extends AbstractIterableAssert
   public SELF elements(Integer... indices) {
     isNotEmpty();
 
+    if (indices == null) {
+      throw new AssertionError("indices must not be null");
+    }
 
-//    checkArgument(predicate != null, "The filter predicate should not be null");
-//    List<? extends ELEMENT> filteredIterable = stream(actual.spliterator(), false).filter(predicate).collect(toList());
+    List<ELEMENT> indexedActual = new ArrayList<>();
+    for (ELEMENT element : actual) {
+      indexedActual.add(element);
+    }
 
-//    assertThat(index).describedAs(navigationDescription("check index validity"))
-//      .isBetween(0, IterableUtil.sizeOf(actual) - 1);
-//    ELEMENT elementAtIndex;
-//    if (actual instanceof List) {
-//      @SuppressWarnings("unchecked")
-//      List<? extends ELEMENT> list = (List<? extends ELEMENT>) actual;
-//      elementAtIndex = list.get(index);
-//    } else {
-      //Iterator<? extends ELEMENT> actualIterator = actual.iterator();
-//      for (int i = 0; i < index; i++) {
-//        actualIterator.next();
-//      }
-//      elementAtIndex = actualIterator.next();
-//    }
-
-    //stream a = 1 2 3
-    //stream b = a b c
-    //a.zipper(b) = (1, a), (2, b), (3, c)
-    //b.zipWithIndex = (0, a), (1, b), (2, c)
-
-//    String[] names = {"Sam", "Pamela", "Dave", "Pascal", "Erik"};
-//    IntStream.range(0, names.length)
-//      .filter(i -> names[i].length() <= i)
-//      .mapToObj(i -> names[i])
-//      .collect(Collectors.toList());
-
-    ZipWithIndex<ELEMENT> zipper = new ZipWithIndex<>();
-    Set<Integer> indicesToKeep = new TreeSet<>(Arrays.asList(indices));
-
-    List<? extends ELEMENT> filteredIterable = stream(actual.spliterator(), false)
-      .map(zipper::zip)
-      .filter(element -> indicesToKeep.contains(element.index))
-      .map(indexed -> indexed.element)
-      .collect(toList());
-
-
-  return newAbstractIterableAssert(filteredIterable).withAssertionState(myself);
-
-}
-
-  private static class IndexedElement<T> {
-    final T element;
-    final int index;
-
-    IndexedElement(T element, int index) {
-      this.element = element;
-      this.index = index;
+    try {
+      List<ELEMENT> filteredIterable = Arrays.stream(indices).map(index -> {
+        if (index == null) {
+          throw new AssertionError("indices must not contain a null value");
+        }
+        return indexedActual.get(index);
+      }).collect(toList());
+      return newAbstractIterableAssert(filteredIterable).withAssertionState(myself);
+    } catch (IndexOutOfBoundsException e) {
+      throw new AssertionError(e);
     }
   }
-
-  private static class ZipWithIndex<T> {
-    int position = 0;
-
-    IndexedElement<T> zip(T element) {
-      int current = position;
-      position += 1;
-      return new IndexedElement<>(element, current);
-    }
-  }
-
 
   /**
    * Navigate and allow to perform assertions on the chosen element of the {@link Iterable} under test.
